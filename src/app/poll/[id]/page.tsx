@@ -18,6 +18,7 @@ export default function PollPage() {
     const [hasVoted, setHasVoted] = useState(false)
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [copied, setCopied] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         if (!id) return
@@ -39,8 +40,12 @@ export default function PollPage() {
     }
 
     const handleVote = async (optionId: string) => {
-        if (!user || hasVoted) return
+        if (!user || hasVoted || isSubmitting) return
+        
+        // Set voted state IMMEDIATELY to prevent double-clicking
+        setHasVoted(true)
         setSelectedId(optionId)
+        setIsSubmitting(true)
 
         const pollRef = doc(db, "polls", id as string)
         const updatedOptions = poll.options.map((opt: any) => {
@@ -53,9 +58,12 @@ export default function PollPage() {
         try {
             await updateDoc(pollRef, { options: updatedOptions })
             localStorage.setItem(`voted_${id}`, "true")
-            setHasVoted(true)
         } catch (error) {
             console.error("Error voting:", error)
+            // Revert on error
+            setHasVoted(false)
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
@@ -102,10 +110,10 @@ export default function PollPage() {
                                     >
                                         <Button
                                             variant="outline"
-                                            disabled={!user || hasVoted}
+                                            disabled={!user || hasVoted || isSubmitting}
                                             onClick={() => handleVote(option.id)}
                                             className={`relative h-24 w-full justify-between overflow-hidden rounded-[1.25rem] border-zinc-700/50 bg-zinc-800/50 px-8 text-xl transition-all duration-500 sm:text-2xl ${
-                                                user && !hasVoted 
+                                                user && !hasVoted && !isSubmitting
                                                 ? "hover:border-white hover:bg-zinc-700/80 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]" 
                                                 : "cursor-default"
                                             }`}
