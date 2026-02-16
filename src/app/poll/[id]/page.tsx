@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useAuth } from "@/src/components/AuthProvider" 
 import { Lock, Share2, CheckCircle2 } from "lucide-react"
 import TopBar from "@/src/components/TopBar"
+import { AuthGate } from "@/src/components/AuthGate"
 
 export default function PollPage() {
     const { id } = useParams()
@@ -41,8 +42,6 @@ export default function PollPage() {
 
     const handleVote = async (optionId: string) => {
         if (!user || hasVoted || isSubmitting) return
-        
-        // Set voted state IMMEDIATELY to prevent double-clicking
         setHasVoted(true)
         setSelectedId(optionId)
         setIsSubmitting(true)
@@ -60,7 +59,6 @@ export default function PollPage() {
             localStorage.setItem(`voted_${id}`, "true")
         } catch (error) {
             console.error("Error voting:", error)
-            // Revert on error
             setHasVoted(false)
         } finally {
             setIsSubmitting(false)
@@ -154,15 +152,7 @@ export default function PollPage() {
                         <div className="mt-12 flex w-full flex-col items-center gap-6">
                             <AnimatePresence mode="wait">
                                 {!user ? (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0 }}
-                                        className="flex items-center gap-3 rounded-full bg-zinc-800/80 px-6 py-3 border border-zinc-700"
-                                    >
-                                        <Lock className="h-4 w-4 text-zinc-500" />
-                                        <p className="text-sm font-medium text-zinc-400">Sign in to cast your vote</p>
-                                    </motion.div>
+                                    <AuthGate/>
                                 ) : (
                                     <motion.div
                                         initial={{ opacity: 0 }}
