@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
-import { doc, onSnapshot, updateDoc } from "firebase/firestore"
+import { doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore"
 import { db } from "@/src/utils/firebaseConfig"
 import { Button } from "@/src/components/ui/button"
 import { FieldSet, FieldLegend, FieldGroup } from "@/src/components/ui/field"
@@ -25,14 +25,20 @@ export default function PollPage() {
         if (!id) return
         const unsub = onSnapshot(doc(db, "polls", id as string), (doc) => {
             if (doc.exists()) {
-                setPoll({ id: doc.id, ...doc.data() })
+                const data = doc.data()
+                setPoll({ id: doc.id, ...data })
+                
+                if (user && data.votedUids?.includes(user.uid)) {
+                    setHasVoted(true)
+                }
             }
         })
-        const voted = localStorage.getItem(`voted_${id}`)
-        if (voted) setHasVoted(true)
+
+        const localVoted = localStorage.getItem(`voted_${id}`)
+        if (localVoted) setHasVoted(true)
 
         return () => unsub()
-    }, [id])
+    }, [id, user])
 
     const handleShare = () => {
         navigator.clipboard.writeText(window.location.href)
@@ -42,6 +48,12 @@ export default function PollPage() {
 
     const handleVote = async (optionId: string) => {
         if (!user || hasVoted || isSubmitting) return
+        
+        if (poll.votedUids?.includes(user.uid)) {
+            setHasVoted(true)
+            return
+        }
+
         setHasVoted(true)
         setSelectedId(optionId)
         setIsSubmitting(true)
@@ -55,7 +67,10 @@ export default function PollPage() {
         })
 
         try {
-            await updateDoc(pollRef, { options: updatedOptions })
+            await updateDoc(pollRef, { 
+                options: updatedOptions,
+                votedUids: arrayUnion(user.uid)
+            })
             localStorage.setItem(`voted_${id}`, "true")
         } catch (error) {
             console.error("Error voting:", error)
@@ -128,7 +143,7 @@ export default function PollPage() {
                                             </AnimatePresence>
 
                                             <div className="z-10 flex items-center gap-3 font-semibold">
-                                                {hasVoted && option.id === selectedId && <CheckCircle2 className="h-6 w-6 text-white" />}
+                                                {hasVoted && (option.id === selectedId || poll.votedUids?.includes(user?.uid)) && <CheckCircle2 className="h-6 w-6 text-white" />}
                                                 <span className={hasVoted && option.id === selectedId ? "text-white" : "text-zinc-300"}>
                                                     {option.text}
                                                 </span>
