@@ -41,7 +41,7 @@ export default function TopBar() {
               disabled={loading}
               className="bg-white text-black px-5 py-2 rounded-full text-sm font-semibold hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-50"
             >
-              {loading ? "Connecting..." : "Get Started"}
+              {loading ? "Connecting..." : "Log In With Google"}
             </button>
           ) : (
             <div className="flex items-center gap-4">
