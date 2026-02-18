@@ -1,4 +1,4 @@
-# Applyo � Real-Time Polling Application
+# Poll-y � Real-Time Polling Application
 
 A lightweight polling web app built with **Next.js**, **React**, and **Firebase**. Users can create a question with multiple options, share a link, and watch vote totals update live for everyone viewing the poll.
 
@@ -34,7 +34,7 @@ The core workflow implemented for the internship task:
 | Frontend | Next.js 16, React 19, TypeScript |
 | Styling/UI | Tailwind CSS, Radix UI, Framer Motion |
 | Backend/Realtime | Firebase Firestore & Authentication |
-| Hosting (suggested) | Vercel, Netlify, or Firebase Hosting |
+| Hosting (suggested) | Vercel |
 
 ---
 
