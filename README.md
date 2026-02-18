@@ -237,12 +237,11 @@ Each poll is accessible at `/poll/[id]`. After creation we `router.push(`/poll/$
 
 ##  Known Limitations
 
-1. **Guest vulnerability** � an unauthenticated visitor may clear localStorage and the UI will briefly allow another vote; the server subsequently rejects it but the UI may flash a changed count.
-2. **No poll expiry** � polls remain indefinitely; theres no automatic cleanup or archiving of stale data.
-3. **Ratelimiting absent** � a determined user could script multiple Google accounts and vote repeatedly since theres no CAPTCHA or IP throttling.
-4. **Clientside ID generation** � option IDs use `Math.random` on the client; collisions are extremely unlikely but theoretically possible.
+1. **No poll expiry** � polls remain indefinitely; theres no automatic cleanup or archiving of stale data.
+2. **Ratelimiting absent** � a determined user could script multiple Google accounts and vote repeatedly since theres no CAPTCHA or IP throttling.
+3. **Clientside ID generation** � option IDs use `Math.random` on the client; collisions are extremely unlikely but theoretically possible.
 
-A more robust production system would enforce Firebase security rules, implement serverside rate limiting, and optionally require email verification or CAPTCHA for account creation.
+A more robust production system would enforce Firebase security rules and implement serverside rate limiting.
 
 ---
 
@@ -250,9 +249,7 @@ A more robust production system would enforce Firebase security rules, implement
 
 Deploy to any platform supporting Next.js (Vercel is recommended for simplicity). Ensure the same Firebase environment variables are set in production. A live demo is available at:
 
-**https://applyo.example.com**
-
-(Replace with your actual deployment URL when submitting.)
+**https://poll-y.vercel.app/**
 
 ---
 
