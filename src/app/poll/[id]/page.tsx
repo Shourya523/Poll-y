@@ -1,21 +1,24 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore"
 import { db } from "@/src/utils/firebaseConfig"
 import { Button } from "@/src/components/ui/button"
-import { FieldSet, FieldLegend, FieldGroup } from "@/src/components/ui/field"
+import { FieldLegend, FieldGroup } from "@/src/components/ui/field"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuth } from "@/src/components/AuthProvider" 
-import { Lock, Share2, CheckCircle2 } from "lucide-react"
+import { Share2, CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react"
 import TopBar from "@/src/components/TopBar"
 import { AuthGate } from "@/src/components/AuthGate"
 
 export default function PollPage() {
     const { id } = useParams()
+    const router = useRouter()
     const { user } = useAuth() 
     const [poll, setPoll] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(false)
     const [hasVoted, setHasVoted] = useState(false)
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [copied, setCopied] = useState(false)
@@ -23,15 +26,24 @@ export default function PollPage() {
 
     useEffect(() => {
         if (!id) return
+        
         const unsub = onSnapshot(doc(db, "polls", id as string), (doc) => {
             if (doc.exists()) {
                 const data = doc.data()
                 setPoll({ id: doc.id, ...data })
+                setError(false)
                 
                 if (user && data.votedUids?.includes(user.uid)) {
                     setHasVoted(true)
                 }
+            } else {
+                setError(true)
             }
+            setLoading(false)
+        }, (err) => {
+            console.error(err)
+            setError(true)
+            setLoading(false)
         })
 
         const localVoted = localStorage.getItem(`voted_${id}`)
@@ -48,8 +60,7 @@ export default function PollPage() {
 
     const handleVote = async (optionId: string) => {
         if (!user || hasVoted || isSubmitting) return
-        
-        if (poll.votedUids?.includes(user.uid)) {
+        if (poll?.votedUids?.includes(user.uid)) {
             setHasVoted(true)
             return
         }
@@ -80,10 +91,35 @@ export default function PollPage() {
         }
     }
 
-    if (!poll) return (
+    if (loading) return (
         <div className="flex min-h-screen items-center justify-center bg-black">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-800 border-t-white" />
         </div>
+    )
+
+    if (error) return (
+        <main className="flex min-h-screen flex-col items-center justify-center bg-black px-6 text-white">
+            <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex max-w-md flex-col items-center text-center"
+            >
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800">
+                    <AlertCircle className="h-10 w-10 text-zinc-500" />
+                </div>
+                <h1 className="mb-2 text-3xl font-black">Poll Not Found</h1>
+                <p className="mb-8 text-zinc-400">
+                    The poll you're looking for doesn't exist or the link might be broken.
+                </p>
+                <Button 
+                    onClick={() => router.push('/')}
+                    className="flex items-center gap-2 rounded-full bg-white px-8 py-6 text-black hover:bg-zinc-200"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Home
+                </Button>
+            </motion.div>
+        </main>
     )
 
     const totalVotes = poll.options.reduce((acc: number, opt: any) => acc + opt.votes, 0)
