@@ -32,7 +32,7 @@ The core workflow implemented for the internship task:
 | Layer | Technology |
 |-------|------------|
 | Frontend | Next.js 16, React 19, TypeScript |
-| Styling/UI | Tailwind CSS, Radix UI, Framer Motion |
+| Styling/UI | Tailwind CSS, Radix UI, ShadCn, Framer Motion |
 | Backend/Realtime | Firebase Firestore & Authentication |
 | Hosting (suggested) | Vercel |
 
