@@ -81,7 +81,7 @@ export function AuthGate() {
                 </Button>
 
                 <p className="mt-6 text-xs text-zinc-500">
-                  By signing in, you agree to our Terms of Service.
+                  
                 </p>
               </div>
             </motion.div>
