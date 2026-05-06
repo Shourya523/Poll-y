@@ -9,7 +9,6 @@ import { FieldLegend, FieldGroup } from "@/src/components/ui/field"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuth } from "@/src/components/AuthProvider" 
 import { Share2, CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react"
-import TopBar from "@/src/components/TopBar"
 import { AuthGate } from "@/src/components/AuthGate"
 
 export default function PollPage() {
@@ -92,13 +91,13 @@ export default function PollPage() {
     }
 
     if (loading) return (
-        <div className="flex min-h-screen items-center justify-center bg-black">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-800 border-t-white" />
+        <div className="flex min-h-[60vh] items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-800 border-t-indigo-500" />
         </div>
     )
 
     if (error) return (
-        <main className="flex min-h-screen flex-col items-center justify-center bg-black px-6 text-white">
+        <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-white">
             <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -109,7 +108,7 @@ export default function PollPage() {
                 </div>
                 <h1 className="mb-2 text-3xl font-black">Poll Not Found</h1>
                 <p className="mb-8 text-zinc-400">
-                    The poll you're looking for doesn't exist or the link might be broken.
+                    The poll you&apos;re looking for doesn&apos;t exist or the link might be broken.
                 </p>
                 <Button 
                     onClick={() => router.push('/')}
@@ -119,16 +118,14 @@ export default function PollPage() {
                     Back to Home
                 </Button>
             </motion.div>
-        </main>
+        </div>
     )
 
     const totalVotes = poll.options.reduce((acc: number, opt: any) => acc + opt.votes, 0)
 
     return (
-        <main className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
-            <TopBar />
-            
-            <div className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center px-6 py-24">
+        <div className="text-white selection:bg-white selection:text-black">
+            <div className="mx-auto flex max-w-2xl flex-col items-center justify-center px-6 py-12">
                 <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -229,6 +226,6 @@ export default function PollPage() {
                     </div>
                 </motion.div>
             </div>
-        </main>
+        </div>
     )
 }
