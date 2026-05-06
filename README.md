@@ -1,67 +1,98 @@
-# Poll-y � Real-Time Polling Application
+# Poll-y 🗳️ Real-Time Polling Application
 
-A lightweight polling web app built with **Next.js**, **React**, and **Firebase**. Users can create a question with multiple options, share a link, and watch vote totals update live for everyone viewing the poll.
+A full-featured polling web app built with **Next.js 16**, **React 19**, and **Firebase**. Users can create questions with multiple options, assign them to topic rooms, share a link, and watch vote totals update live for everyone viewing the poll.
 
 ---
 
-##  Project Overview
+## 🚀 Live Demo
 
-The core workflow implemented for the internship task:
+**[https://poll-y.vercel.app/](https://poll-y.vercel.app/)**
 
-1. **Create a poll** with a question and at least two options.
+---
+
+## 📌 Project Overview
+
+The core workflow:
+
+1. **Create a poll** — choose a topic room, add a question and at least two options.
 2. **Generate a shareable URL** immediately after creation.
-3. **Anyone with the link** sees the poll and can cast a single vote (after signing in).
-4. **Results update in real time** via Firestore listeners, without page refresh.
-5. **Persistence** is handled by Firebase Firestore; polls and votes survive page reloads and longterm.
+3. **Anyone with the link** can view the poll and cast a single vote (sign-in required).
+4. **Results update in real time** via Firestore listeners — no page refresh needed.
+5. **Persistence** via Firebase Firestore — polls and votes survive page reloads.
 
 ---
 
-##  Key Features
+## ✨ Key Features
 
-- Intuitive poll creation UI with validation for empty/duplicate entries
-- Shareable link with copytoclipboard feedback
-- Singlechoice voting; users can vote once per poll
-- Realtime vote count updates using Firestore `onSnapshot`
-- Responsive, mobilefriendly interface styled with Tailwind CSS and Radix UI components
-- Google authentication for vote tracking and poll ownership
+- **Sidebar navigation** — persistent desktop sidebar + mobile bottom tab bar
+- **Live Feed** — home page shows recent polls with vote counts and leading options
+- **Rooms** — 8 topic rooms (Tech, Gaming, Sports, Music, Movies, Food, Science, General) for organized poll browsing
+- **Popular Polls** — all polls ranked by total votes with a podium UI for the top 3
+- **Poll History** — view and revisit all polls you've created
+- **Real-time voting** via Firestore `onSnapshot` — results update instantly across all clients
+- **Google authentication** for vote tracking and poll ownership
+- **Anti-abuse** — UID-backed vote tracking + localStorage flag prevents double-voting
+- **Responsive** — fully functional on desktop and mobile
 
 ---
 
-##  Tech Stack
+## 🛠️ Tech Stack
 
 | Layer | Technology |
-|-------|------------|
+|---|---|
 | Frontend | Next.js 16, React 19, TypeScript |
-| Styling/UI | Tailwind CSS, Radix UI, ShadCn, Framer Motion |
-| Backend/Realtime | Firebase Firestore & Authentication |
-| Hosting (suggested) | Vercel |
+| Styling / UI | Tailwind CSS v4, Radix UI, shadcn/ui, Framer Motion |
+| Backend / Realtime | Firebase Firestore & Authentication |
+| Hosting | Vercel |
 
 ---
 
-##  Project Structure
+## 📁 Project Structure
 
 ```
 src/
-  app/                 # Next.js pages and layouts (poll pages, user history, etc.)
-  components/          # Reusable UI components (AuthGate, MakePoll, PollCard, etc.)
-  utils/firebaseConfig.ts  # Firebase initialization
-  lib/utils.ts         # Miscellaneous helpers
+  app/
+    page.tsx               # Home — live feed dashboard
+    popular/               # Popular polls ranked by votes
+    rooms/                 # Room directory + per-room poll views
+    poll/[id]/             # Individual poll voting page
+    user-history/          # Polls created by signed-in user
+    layout.tsx             # Root layout with Sidebar + Header
+    globals.css            # Design tokens, scrollbar, utilities
+
+  components/
+    Sidebar.tsx            # Desktop sidebar + mobile bottom nav
+    Header.tsx             # Sticky header with auth controls
+    MakePoll.tsx           # Poll creation dialog with room picker
+    PollCard.tsx           # Poll summary card (used in history)
+    AuthGate.tsx           # Sign-in prompt gate for voting
+    AuthProvider.tsx       # Firebase auth context
+    ui/                    # shadcn/ui primitives
+
+  utils/
+    firebaseConfig.ts      # Firebase app initialization
+    tw.ts                  # cn() classname utility
+
+  lib/
+    utils.ts               # Shared utilities
 ```
 
 ---
 
-##  Getting Started
+## ⚙️ Getting Started
 
-1. Clone the repository:
+1. **Clone the repository:**
    ```bash
-   git clone <repo-url>
-   cd applyo
+   git clone https://github.com/Shourya523/Poll-y.git
+   cd Poll-y
    ```
-2. Install dependencies:
+
+2. **Install dependencies:**
    ```bash
    npm install
    ```
-3. Create a `.env.local` file with your Firebase config keys:
+
+3. **Create `.env.local`** with your Firebase config:
    ```env
    NEXT_PUBLIC_FIREBASE_API_KEY=...
    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
@@ -69,12 +100,16 @@ src/
    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
    NEXT_PUBLIC_FIREBASE_APP_ID=...
+   NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=...
    ```
-4. Run the development server:
+
+4. **Run the development server:**
    ```bash
    npm run dev
    ```
-5. Build for production:
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+5. **Build for production:**
    ```bash
    npm run build
    npm start
@@ -82,145 +117,31 @@ src/
 
 ---
 
-##  Fairness / AntiAbuse Mechanisms
+## 🏛️ Architecture & Data Model
 
-1. **UID backed vote tracking** � each poll document stores a `votedUids` array; when a vote is submitted the voters Firebase UID is appended. The UI checks this array and disables the voting buttons if the UID already exists, preventing the same account from voting twice.
+### Firestore `polls` Collection
 
-   ```ts
-   // PollPage.tsx useEffect listener
-   if (user && data.votedUids?.includes(user.uid)) {
-       setHasVoted(true)
-   }
-   
-   // handleVote function
-   const pollRef = doc(db, "polls", id as string)
-   await updateDoc(pollRef, { 
-       options: updatedOptions,
-       votedUids: arrayUnion(user.uid)
-   })
-   ```
-
-2. **LocalStorage flag** � after a vote the client writes `voted_<pollId>` to localStorage. This gives immediate feedback and guards against accidental doublesubmissions when auth state flickers.
-
-   ```ts
-   localStorage.setItem(`voted_${id}`, "true")
-   const localVoted = localStorage.getItem(`voted_${id}`)
-   if (localVoted) setHasVoted(true)
-   ```
-
-3. **Google authentication requirement** � both poll creation and voting require a signedin Google user. The `AuthGate` component wraps sensitive actions, redirecting unsigned users to sign in.
-
-   ```tsx
-   export function AuthGate() {
-     const { user, loading } = useAuth()
-     if (!user && !loading) {
-       return (
-         <div className="text-center">
-           <p>Please sign in to participate.</p>
-           <Button onClick={signInWithGoogle}>Sign in</Button>
-         </div>
-       )
-     }
-     return null
-   }
-   ```
-
-These three mechanisms together deter casual abuse; see Known Limitations for remaining gaps.
-
----
-
-##  Edge Cases Handled
-
-### Listener cleanup
-Every `onSnapshot` call returns an unsubscribe function. We call it in the `useEffect` cleanup to prevent memory leaks when navigating away or when the poll ID changes.
-
-```ts
-useEffect(() => {
-  if (!id) return
-  const unsub = onSnapshot(doc(db, "polls", id as string), (doc) => {
-      if (doc.exists()) {
-          setPoll({ id: doc.id, ...doc.data() })
-      }
-  })
-  return () => unsub()
-}, [id, user])
-```
-
-### Poll creation validation
-The creation form guards against invalid input:
-- question must be nonempty after trimming
-- at least two options with nonblank text
-- options list cannot shrink below two items
-
-```ts
-const validOptions = options.filter(opt => opt.trim() !== "")
-if (!question.trim() || validOptions.length < 2) return
-```
-
-### Vote percentage calculation
-When nobody has voted yet, dividing by zero would produce `NaN`. We handle it explicitly:
-
-```ts
-const totalVotes = poll.options.reduce((acc, opt) => acc + opt.votes, 0)
-const percentage = totalVotes > 0 ? Math.round((option.votes / totalVotes) * 100) : 0
-```
-
-### Graceful error UI
-If the poll ID is invalid or the document has been deleted, `poll` remains null and we render a userfriendly message instead of a blank page.
-
-```tsx
-if (!poll) return (
-  <div className="flex min-h-screen items-center justify-center bg-black">
-      <p className="text-white">Poll not found or has been deleted.</p>
-  </div>
-)
-```
-
-### Optimistic UI and rollback
-Clicking a vote button immediately disables further interaction and shows a selection; if the Firestore update fails we revert the state and log an error.
-
-```ts
-setHasVoted(true)
-try {
-  await updateDoc(pollRef, {...})
-} catch (error) {
-  console.error("Error voting:", error)
-  setHasVoted(false)
-}
-```
-
-### Authentication transitions
-Auth state may change while a user interacts (e.g. they sign out midsession). We account for this by rechecking `user` inside the main listener and in click handlers; voting and poll creation are disabled when `user` is null.
-
-
----
-
-##  Architecture & Data Model
-
-`polls` collection documents follow this shape:
+Each poll document follows this shape:
 
 ```ts
 interface Poll {
   id: string;
   question: string;
-  options: { id: string; text: string; votes: number }[];
-  votedUids?: string[];           // fairness control
-  createdBy: string;
+  options: {
+    id: string;
+    text: string;
+    votes: number;
+  }[];
+  room: string;            // e.g. "tech", "gaming", "general"
+  votedUids?: string[];    // anti-double-vote control
+  createdBy: string;       // Firebase UID
   createdAt: Timestamp;
 }
 ```
 
-Options are generated clientside with a short random ID for local UI keys:
+The `room` field was added to power the Rooms feature — polls are tagged on creation and filtered with a Firestore `where("room", "==", roomId)` query.
 
-```ts
-options: validOptions.map((opt) => ({
-  id: Math.random().toString(36).substring(2, 9),
-  text: opt.trim(),
-  votes: 0
-}))
-```
-
-Realtime syncing uses Firestores `onSnapshot` listener on the specific poll document. Any update�whether from the current client or another�reruns the callback, updating React state.
+### Real-time Syncing
 
 ```ts
 const unsub = onSnapshot(doc(db, "polls", id as string), (doc) => {
@@ -228,35 +149,73 @@ const unsub = onSnapshot(doc(db, "polls", id as string), (doc) => {
     setPoll({ id: doc.id, ...doc.data() })
   }
 })
+return () => unsub() // cleanup on unmount
 ```
 
-### URL structure
-Each poll is accessible at `/poll/[id]`. After creation we `router.push(`/poll/${docRef.id}`)` to send the creator to their new poll.
+Any update from any client immediately propagates to all connected listeners.
+
+### URL Structure
+
+| Route | Description |
+|---|---|
+| `/` | Home feed — recent polls |
+| `/poll/[id]` | Individual poll voting page |
+| `/popular` | Polls ranked by vote count |
+| `/rooms` | Room directory |
+| `/rooms/[roomId]` | Polls filtered by room |
+| `/user-history` | Signed-in user's poll history |
 
 ---
 
-##  Known Limitations
+## 🛡️ Fairness / Anti-Abuse Mechanisms
 
-1. **No poll expiry** � polls remain indefinitely; theres no automatic cleanup or archiving of stale data.
-2. **Ratelimiting absent** � a determined user could script multiple Google accounts and vote repeatedly since theres no CAPTCHA or IP throttling.
-3. **Clientside ID generation** � option IDs use `Math.random` on the client; collisions are extremely unlikely but theoretically possible.
+1. **UID-backed vote tracking** — each poll stores a `votedUids` array. On vote, the user's UID is appended via `arrayUnion`. The UI checks this on load and disables voting if the UID exists.
 
-A more robust production system would enforce Firebase security rules and implement serverside rate limiting.
+   ```ts
+   await updateDoc(pollRef, {
+     options: updatedOptions,
+     votedUids: arrayUnion(user.uid)
+   })
+   ```
+
+2. **LocalStorage flag** — after a vote, `voted_<pollId>` is written to localStorage for instant feedback and protection against auth-flicker double-submits.
+
+   ```ts
+   localStorage.setItem(`voted_${id}`, "true")
+   ```
+
+3. **Google authentication required** — both poll creation and voting require a signed-in Google account. The `AuthGate` component blocks unauthenticated users.
 
 ---
 
-##  Deployment
+## 🧩 Edge Cases Handled
 
-Deploy to any platform supporting Next.js (Vercel is recommended for simplicity). Ensure the same Firebase environment variables are set in production. A live demo is available at:
-
-**https://poll-y.vercel.app/**
+| Case | Handling |
+|---|---|
+| Listener memory leaks | `onSnapshot` unsubscribed in `useEffect` cleanup |
+| Zero votes (divide by zero) | `percentage = totalVotes > 0 ? Math.round(...) : 0` |
+| Invalid/deleted poll ID | Graceful error state with a back-to-home button |
+| Optimistic UI rollback | `setHasVoted(false)` on Firestore write failure |
+| Auth state mid-session | All voting/creation actions recheck `user` before proceeding |
+| Empty/invalid poll form | Question and minimum 2 non-blank options enforced before submit |
 
 ---
 
-##  Final Notes
+## ⚠️ Known Limitations
 
-- **Realtime updates** are powered by Firestores listeners � when a vote occurs the document change propagates instantly to every connected client.
-- **Share links** are durable and work long after the creator closes their browser, because all state lives in Firestore.
-- **Authentication** is minimal (Google only) to satisfy assignment requirements while still providing a link between activity and a user.
+1. **No poll expiry** — polls persist indefinitely; there's no automatic archival.
+2. **No rate limiting** — a determined actor with multiple Google accounts could vote repeatedly.
+3. **Client-side option IDs** — uses `Math.random()` (collisions extremely unlikely but theoretically possible).
 
-This project meets all success criteria and demonstrates a fullstack realtime application with persistence, fairness controls, and thoughtful edgecase handling. Vastly more features (admin UI, analytics, expiry rules) could be added later, but the core functionality is stable and productionready.
+A production hardening pass would add Firebase Security Rules, server-side rate limiting, and CAPTCHA.
+
+---
+
+## 📝 Final Notes
+
+- **Real-time updates** are powered by Firestore listeners — vote changes propagate instantly to every connected client.
+- **Share links** are durable and stateless — polls are accessible long after the creator closes their browser.
+- **Rooms** allow organized browsing of polls by topic without any backend changes — they're a pure Firestore query filter.
+- **Popular polls** ranking is computed client-side by sorting all fetched polls by total vote count.
+
+This project demonstrates a full-stack real-time application with persistence, fairness controls, a polished UI, and thoughtful edge-case handling.
